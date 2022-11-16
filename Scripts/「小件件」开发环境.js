@@ -64,6 +64,7 @@ class Base {
     } else {
       result = `${u}?${q}`
     }
+    console.log(result)
     return result
   }
 
@@ -124,7 +125,12 @@ class Base {
     return data
   }
 
-  async httpPost (url, data) {}
+  async httpPost (url, data) { 
+    let req = new Request(url)
+    req.method = "POST"
+    req.body = data
+    return await req.loadJSON()
+  }
 
   /**
    * 获取远程图片内容
