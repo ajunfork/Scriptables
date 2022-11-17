@@ -74,13 +74,13 @@ class Widget extends Base {
    * 渲染中尺寸组件
    */
   async renderMedium (count = 4) {
-    let rst =  await this.httpGet('https://moyu-server.miht.ml/api/scriptable/dish')
-    console.log(rst)
+    let rst =  await this.httpGet('https://moyu-server.miht.ml/api/scriptable/dish?num='+count)
+    console.log(rst) 
     // let res = await this.httpGet('https://m.weibo.cn/api/container/getIndex?containerid=106003%26filter_type%3Drealtimehot')
     // let data = res['data']['cards'][0]['card_group'] 
     // // 去除第一条
     // data.shift()
-    // 显示数据
+    // 显示数据 
 
     let data = rst
     let w = new ListWidget()
