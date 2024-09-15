@@ -1,0 +1,203 @@
+// Variables used by Scriptable.
+// These must be at the very top of the file. Do not edit.
+// icon-color: red; icon-glyph: car-side;
+const params = args.widgetParameter ? args.widgetParameter.split(",") : [];
+
+const isDarkTheme = params?.[0] === 'dark';
+const padding = 0;
+
+// 模拟数据
+const car = {
+  display_name: "我的特斯拉",
+  state: "online",
+  battery_details: {
+    battery_level: 75,
+    rated_battery_range: 300
+  },
+  charging_details: {
+    charge_limit_soc: 90,
+    charger_power: 11,
+    time_to_full_charge: 2.5
+  },
+  car_status: {
+    locked: true,
+    is_user_present: false,
+    windows_open: false,
+    doors_open: false
+  },
+  climate_details: {
+    is_climate_on: true
+  },
+  state_since: new Date().getTime() - 3600000, // 1小时前
+  car_geodata: {
+    geofence: "家",
+    latitude: 31.2304,
+    longitude: 121.4737,
+    image: null // 这里需要实际的地图图片
+  },
+  driving_details: {
+    heading: 45,
+    speed: 0
+  }
+};
+
+const widget = new ListWidget();
+widget.setPadding(0, 0, 0, 0);
+
+// Widget UI  
+let layout = widget.addStack();
+layout.layoutVertically();
+
+let main = layout.addStack();
+main.layoutHorizontally();
+
+let left = main.addStack();
+left.layoutVertically();
+left.size = new Size(190, 170);
+left.setPadding(15, 25, 15, 25);
+
+main.addSpacer(10);
+
+let right = main.addStack();
+right.layoutVertically();
+right.size = new Size(170, 170);
+right.setPadding(0, 0, 0, 0);
+
+// Car Info
+{
+  let stack = left.addStack();
+  stack.centerAlignContent();
+  stack.setPadding(0, 0, 0, 0);
+  stack.size = new Size(150, 20);
+  
+  // Car Name
+  let text = stack.addText(car.display_name + '                  ');
+  text.font = Font.mediumSystemFont(16);
+  text.lineLimit = 1;
+  
+  stack.addSpacer(3);
+  
+  // Car State
+  stack.addSpacer(5);
+  let symbol = SFSymbol.named("parkingsign.circle");
+  let img = stack.addImage(symbol.image);
+  img.tintColor = Color.green();
+  img.imageSize = new Size(18, 18);
+}
+
+// Battery Info
+{
+  left.addSpacer(15);
+  
+  let stack = left.addStack();
+  stack.centerAlignContent();
+  
+  let batteryWidth = 50;
+  let batteryHeight = 14;
+  
+  let batteryDraw = new DrawContext();
+  batteryDraw.size = new Size(batteryWidth, batteryHeight);
+  batteryDraw.opaque = false;
+  
+  // 绘制电池外框
+  batteryDraw.setFillColor(Color.white());
+  batteryDraw.fillRect(new Rect(0, 0, batteryWidth - 4, batteryHeight));
+  batteryDraw.fillRect(new Rect(batteryWidth - 4, batteryHeight / 4, 4, batteryHeight / 2));
+  
+  // 绘制电量
+  let levelWidth = (car.battery_details.battery_level / 100) * (batteryWidth - 6);
+  batteryDraw.setFillColor(Color.green());
+  batteryDraw.fillRect(new Rect(1, 1, levelWidth, batteryHeight - 2));
+  
+  let batteryImage = stack.addImage(batteryDraw.getImage());
+  batteryImage.imageSize = new Size(batteryWidth, batteryHeight);
+  
+  stack.addSpacer(5);
+  
+  let kmText = stack.addText(`${car.battery_details.rated_battery_range}km`);
+  kmText.font = Font.mediumSystemFont(12);
+  kmText.textColor = Color.white();
+  
+  stack.addSpacer();
+  
+  let timeText = stack.addDate(new Date());
+  timeText.font = Font.mediumSystemFont(12);
+  timeText.textColor = Color.gray();
+}
+
+// Car Status
+{
+  left.addSpacer(15);
+  
+  let stack = left.addStack();
+  
+  let iconSize = new Size(20, 16);
+  let spacerSize = 12;
+  
+  // Lock State
+  let lockSymbol = SFSymbol.named(car.car_status.locked ? "lock.fill" : "lock.open.fill");
+  let lockImg = stack.addImage(lockSymbol.image);
+  lockImg.tintColor = Color.white();
+  lockImg.imageSize = iconSize;
+  stack.addSpacer(spacerSize);
+  
+  // User Present
+  let personSymbol = SFSymbol.named("person.fill");
+  let personImg = stack.addImage(personSymbol.image);
+  personImg.tintColor = car.car_status.is_user_present ? Color.white() : Color.gray();
+  personImg.imageSize = iconSize;
+  stack.addSpacer(spacerSize);
+  
+  // Windows
+  let windowSymbol = SFSymbol.named("car.window.right");
+  let windowImg = stack.addImage(windowSymbol.image);
+  windowImg.tintColor = car.car_status.windows_open ? Color.white() : Color.gray();
+  windowImg.imageSize = iconSize;
+  stack.addSpacer(spacerSize);
+  
+  // Climate
+  let climateSymbol = SFSymbol.named("fan.fill");
+  let climateImg = stack.addImage(climateSymbol.image);
+  climateImg.tintColor = car.climate_details.is_climate_on ? Color.white() : Color.gray();
+  climateImg.imageSize = iconSize;
+  stack.addSpacer(spacerSize);
+  
+  // Doors
+  let doorSymbol = SFSymbol.named("car.top.door.front.left.and.front.right.and.rear.left.and.rear.right.open.fill");
+  let doorImg = stack.addImage(doorSymbol.image);
+  doorImg.tintColor = car.car_status.doors_open ? Color.white() : Color.gray();
+  doorImg.imageSize = iconSize;
+}
+
+// Location Info
+{
+  left.addSpacer(15);
+  
+  let stack = left.addStack();
+  
+  let timeSince = Math.floor((new Date().getTime() - car.state_since) / 60000);
+  let timeText = timeSince < 60 ? `${timeSince}m` : `${Math.floor(timeSince / 60)}h`;
+  
+  let locationText = stack.addText(`${timeText} · ${car.car_geodata.geofence}`);
+  locationText.font = Font.mediumSystemFont(12);
+  locationText.textColor = Color.gray();
+  locationText.lineLimit = 2;
+}
+
+// Map (placeholder)
+{
+  let mapStack = right.addStack();
+  mapStack.setPadding(0, 0, 0, 0);
+  
+  let mapPlaceholder = mapStack.addText("地图占位符");
+  mapPlaceholder.font = Font.mediumSystemFont(16);
+  mapPlaceholder.textColor = Color.white();
+}
+
+if (config.runsInWidget) {
+  Script.setWidget(widget);
+} else {
+  widget.presentMedium();
+}
+
+Script.complete();
